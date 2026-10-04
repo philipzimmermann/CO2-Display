@@ -1,0 +1,6 @@
+../Core/Src/scd41.c:17:16:SCD41_CRC8	24	static
+../Core/Src/scd41.c:34:21:SCD41_SendCommand	32	static
+../Core/Src/scd41.c:48:14:SCD41_Init	16	static
+../Core/Src/scd41.c:56:14:SCD41_StartMeasurement	16	static
+../Core/Src/scd41.c:60:14:SCD41_DataReady	32	static
+../Core/Src/scd41.c:88:14:SCD41_ReadMeasurement	40	static

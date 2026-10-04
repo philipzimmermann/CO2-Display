@@ -1,0 +1,6 @@
+../Core/Src/scd41.c:17:16:SCD41_CRC8	4
+../Core/Src/scd41.c:34:21:SCD41_SendCommand	2
+../Core/Src/scd41.c:48:14:SCD41_Init	2
+../Core/Src/scd41.c:56:14:SCD41_StartMeasurement	1
+../Core/Src/scd41.c:60:14:SCD41_DataReady	5
+../Core/Src/scd41.c:88:14:SCD41_ReadMeasurement	6

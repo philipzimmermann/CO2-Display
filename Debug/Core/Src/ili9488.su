@@ -1,0 +1,8 @@
+../Core/Src/ili9488.c:15:6:ILI9488_Init	24	static
+../Core/Src/ili9488.c:43:6:ILI9488_WriteCommand	16	static
+../Core/Src/ili9488.c:52:6:ILI9488_WriteData	24	static
+../Core/Src/ili9488.c:62:6:ILI9488_Reset	8	static
+../Core/Src/ili9488.c:70:6:ILI9488_SetAddressWindow	32	static
+../Core/Src/ili9488.c:98:6:ILI9488_FillScreen	24	static
+../Core/Src/ili9488.c:103:6:ILI9488_DrawPixel	40	static
+../Core/Src/ili9488.c:127:6:ILI9488_FillRectangle	248	static
