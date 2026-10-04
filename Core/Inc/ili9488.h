@@ -21,13 +21,31 @@ void ILI9488_WriteData(SPI_HandleTypeDef *hspi, const uint8_t *data,
 		uint16_t size);
 void ILI9488_Reset();
 
+void ILI9488_SetBrightness(TIM_HandleTypeDef *htim, uint8_t brightness);
+
 void ILI9488_SetAddressWindow(SPI_HandleTypeDef *hspi, uint16_t x0, uint16_t y0,
 		uint16_t x1, uint16_t y1);
 
 void ILI9488_FillScreen(SPI_HandleTypeDef *hspi, uint32_t color);
 void ILI9488_DrawPixel(SPI_HandleTypeDef *hspi, uint16_t x, uint16_t y,
 		uint32_t color);
-void ILI9488_FillRectangle(SPI_HandleTypeDef *hspi, uint16_t x0, uint16_t y0,
+void ILI9488_DrawLine(SPI_HandleTypeDef *hspi, uint16_t x0, uint16_t y0,
 		uint16_t x1, uint16_t y1, uint32_t color);
+void ILI9488_FillRectangle(SPI_HandleTypeDef *hspi, int x0, int y0, int x1,
+		int y1, uint32_t color);
+void ILI9488_DrawRectangle(SPI_HandleTypeDef *hspi, uint16_t x0, uint16_t y0,
+		uint16_t x1, uint16_t y1, uint32_t color);
+void ILI9488_DrawCircle(SPI_HandleTypeDef *hspi, uint16_t x0, uint16_t y0,
+		uint16_t r, uint32_t color);
+void ILI9488_FillCircle(SPI_HandleTypeDef *hspi, int x0, int y0, int radius,
+		uint32_t color);
+void ILI9488_DrawChar(SPI_HandleTypeDef *hspi,
+                      int x, int y,
+                      char c,
+                      uint32_t color);
+void ILI9488_DrawString(SPI_HandleTypeDef *hspi,
+                        int x, int y,
+                        const char *str,
+                        uint32_t color);
 
 #endif /* INC_ILI9488_H_ */
