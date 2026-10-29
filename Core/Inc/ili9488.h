@@ -10,6 +10,7 @@
 
 #include "stm32f4xx_hal.h"
 #include <stdint.h>
+#include "scd41.h"
 
 typedef enum {
 	ILI9488_OK, ILI9488_NOT_READY, SCD41_SPI_ERROR
@@ -42,10 +43,18 @@ void ILI9488_FillCircle(SPI_HandleTypeDef *hspi, int x0, int y0, int radius,
 void ILI9488_DrawChar(SPI_HandleTypeDef *hspi,
                       int x, int y,
                       char c,
-                      uint32_t color);
+                      uint32_t color,int scale);
 void ILI9488_DrawString(SPI_HandleTypeDef *hspi,
                         int x, int y,
                         const char *str,
-                        uint32_t color);
+                        uint32_t color,int scale);
+void ILI9488_DrawStringBackground(SPI_HandleTypeDef *hspi,
+                        int x, int y,
+                        const char *str,
+                        uint32_t color,
+						uint32_t bg_color);
+void ILI9488_DrawDashboardBackground(SPI_HandleTypeDef *hspi);
+void ILI9488_DrawDashboardData(SPI_HandleTypeDef *hspi,
+                           SCD41_Data scd_data);
 
 #endif /* INC_ILI9488_H_ */

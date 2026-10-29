@@ -123,21 +123,11 @@ int main(void) {
 		printf("CO2 Sensor not detected.\r\n");
 	}
 
-
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
 	ILI9488_SetBrightness(&htim2, 100);
 	ILI9488_Init(&hspi1);
 	printf("SPI Display ready!\r\n");
-	ILI9488_FillScreen(&hspi1, 0xFFFFFF);
-	int32_t colors[] = { 0xfeda75, 0xfa7e1e, 0xd62976, 0x962fbf, 0x4f5bd5 };
-	for (int i = 0; i < 5; i++) {
-		ILI9488_FillRectangle(&hspi1, i*96, 0, (i+1) * 96, 319, colors[i]);
-	}
-	ILI9488_FillCircle(&hspi1,240,160,100,0x287e29);
-	ILI9488_DrawString(&hspi1,
-	                   240, 160,
-	                   "Hallo Jessi!",
-	                   0xFFFFFF);
+	ILI9488_DrawDashboardBackground(&hspi1);
 
 	SCD41_Data scd_data;
 	char co2_str[20];
@@ -158,12 +148,7 @@ int main(void) {
 				sprintf(temp_str, "Temp: %.1f C", scd_data.temperature);
 				sprintf(humidity_str, "Hum: %.1f %%", scd_data.humidity);
 
-				SSD1306_FillBlack();
-
-				SSD1306_DrawString(0, 0, co2_str);
-				SSD1306_DrawString(0, 16, temp_str);
-				SSD1306_DrawString(0, 32, humidity_str);
-				SSD1306_UpdateScreen(&hi2c1);
+				ILI9488_DrawDashboardData(&hspi1, scd_data);
 			}
 		}
 

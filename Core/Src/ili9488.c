@@ -11,9 +11,35 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-static int SCREEN_WIDTH = 480;
-static int SCREEN_HEIGHT = 320;
+static const int SCREEN_WIDTH = 320;
+static const int SCREEN_HEIGHT = 480;
+
+static const int FONT_HEIGHT = 16;
+static const int FONT_WIDTH = 8;
+
+static const int COLOR_BG = 0x000000;
+static const int COLOR_FONT = 0xFFFFFF;
+
+static const int Y_HEADER_START = 0;
+static const int Y_HEADER_TEXT = 25;
+static const int Y_HEADER_END = 65;
+
+static const int Y_CO2_START = 85;
+static const int Y_CO2_TEXT = 110;
+static const int Y_CO2_VALUE = 140;
+static const int Y_CO2_END = 185;
+
+static const int Y_TEMP_START = 205;
+static const int Y_TEMP_TEXT = 230;
+static const int Y_TEMP_VALUE = 260;
+static const int Y_TEMP_END = 305;
+
+static const int Y_HUM_START = 325;
+static const int Y_HUM_TEXT = 350;
+static const int Y_HUM_VALUE = 380;
+static const int Y_HUM_END = 425;
 
 void ILI9488_Init(SPI_HandleTypeDef *hspi) {
 	uint8_t data;
@@ -32,10 +58,10 @@ void ILI9488_Init(SPI_HandleTypeDef *hspi) {
 	ILI9488_WriteData(hspi, &data, 1);
 
 	// Memory Access Control
-	// Landscape orientation + BGR
+	// Portrait orientation + BGR
 	ILI9488_WriteCommand(hspi, 0x36);
 
-	data = 0x28;
+	data = 0x88;
 	ILI9488_WriteData(hspi, &data, 1);
 
 	// Turn display on
@@ -130,8 +156,8 @@ void ILI9488_DrawPixel(SPI_HandleTypeDef *hspi, uint16_t x, uint16_t y,
 	ILI9488_WriteData(hspi, pixel, 3);
 }
 
-void ILI9488_FillRectangle(SPI_HandleTypeDef *hspi, int x0, int y0,
-		int x1, int y1, uint32_t color) {
+void ILI9488_FillRectangle(SPI_HandleTypeDef *hspi, int x0, int y0, int x1,
+		int y1, uint32_t color) {
 	// Sort coordinates
 	if (x0 > x1) {
 		int temp = x0;
@@ -146,7 +172,7 @@ void ILI9488_FillRectangle(SPI_HandleTypeDef *hspi, int x0, int y0,
 	}
 
 	// Completely outside screen
-	if (x1 < 0 || x0 >= 480 || y1 < 0 || y0 >= 320)
+	if (x1 < 0 || x0 >= SCREEN_WIDTH || y1 < 0 || y0 >= SCREEN_HEIGHT)
 		return;
 
 	// Clip to screen
@@ -154,10 +180,10 @@ void ILI9488_FillRectangle(SPI_HandleTypeDef *hspi, int x0, int y0,
 		x0 = 0;
 	if (y0 < 0)
 		y0 = 0;
-	if (x1 >= 480)
-		x1 = 479;
-	if (y1 >= 320)
-		y1 = 319;
+	if (x1 >= SCREEN_WIDTH)
+		x1 = SCREEN_WIDTH - 1;
+	if (y1 >= SCREEN_HEIGHT)
+		y1 = SCREEN_HEIGHT - 1;
 
 	uint8_t pixel[3];
 	ColorToRGB666(color, pixel);
@@ -264,40 +290,122 @@ void ILI9488_FillCircle(SPI_HandleTypeDef *hspi, int x0, int y0, int radius,
 	} while (x < 0);
 }
 
-void ILI9488_DrawChar(SPI_HandleTypeDef *hspi,
-                      int x, int y,
-                      char c,
-                      uint32_t color)
-{
-    const uint8_t *glyph = font8x16[(uint8_t)c];
+void ILI9488_DrawChar(SPI_HandleTypeDef *hspi, int x, int y, char c,
+		uint32_t color, int scale) {
+	if (scale < 1) {
+		return;
+	}
 
-    for (int row = 0; row < 16; row++)
-    {
-        uint8_t bits = glyph[row];
+	const uint8_t *glyph = font8x16[(uint8_t) c];
 
-        for (int col = 0; col < 8; col++)
-        {
-            if (bits & (1 << (7 - col)))
-            {
-                ILI9488_DrawPixel(hspi,
-                                  x + col,
-                                  y + row,
-                                  color);
-            }
-        }
-    }
+	for (int row = 0; row < 16; row++) {
+		uint8_t bits = glyph[row];
+
+		for (int col = 0; col < 8; col++) {
+			if (bits & (1 << (7 - col))) {
+				for (int dy = 0; dy < scale; dy++) {
+					for (int dx = 0; dx < scale; dx++) {
+						ILI9488_DrawPixel(hspi, x + col * scale + dx,
+								y + row * scale + dy, color);
+					}
+				}
+			}
+		}
+	}
 }
 
-void ILI9488_DrawString(SPI_HandleTypeDef *hspi,
-                        int x, int y,
-                        const char *str,
-                        uint32_t color)
-{
-    while (*str)
-    {
-        ILI9488_DrawChar(hspi, x, y, *str, color);
+void ILI9488_DrawString(SPI_HandleTypeDef *hspi, int x, int y, const char *str,
+		uint32_t color, int scale) {
+	if (scale < 1) {
+		return;
+	}
 
-        x += 8;       // next character
-        str++;
-    }
+	while (*str) {
+		ILI9488_DrawChar(hspi, x, y, *str, color, scale);
+		x += 8 * scale;
+		str++;
+	}
+}
+
+void ILI9488_DrawStringBackground(SPI_HandleTypeDef *hspi, int x, int y,
+		const char *str, uint32_t color, uint32_t bg_color) {
+	int length = strlen(str);
+	ILI9488_FillRectangle(hspi, x, y, x + length * FONT_WIDTH, y + FONT_HEIGHT,
+			bg_color);
+	ILI9488_DrawString(hspi, x, y, str, color,1);
+}
+
+void ILI9488_DrawDashboardBackground(SPI_HandleTypeDef *hspi) {
+	// Background
+	ILI9488_FillScreen(hspi, COLOR_BG);
+
+	// -------------------------
+	// Header
+	// -------------------------
+
+	ILI9488_FillRectangle(hspi, 0, Y_HEADER_START, 319, Y_HEADER_END, COLOR_BG);
+
+	const char *title = "AIR MONITOR";
+	ILI9488_DrawString(hspi,
+			SCREEN_WIDTH / 2 - (strlen(title) * FONT_WIDTH), Y_HEADER_TEXT,
+			title, COLOR_FONT, 2);
+
+	// -------------------------
+	// CO2
+	// -------------------------
+	ILI9488_DrawRectangle(hspi, 20, Y_CO2_START, 299, Y_CO2_END, COLOR_FONT);
+
+	const char *co2_text = "CO\x01 concentration";
+	ILI9488_DrawString(hspi, 70, Y_CO2_TEXT, co2_text, COLOR_FONT,1);
+
+	ILI9488_DrawString(hspi, 70, Y_CO2_VALUE, "Measuring", COLOR_FONT,1);
+
+	// -------------------------
+	// Temperature panel
+	// -------------------------
+
+	ILI9488_DrawRectangle(hspi, 20, Y_TEMP_START, 299, Y_TEMP_END, COLOR_FONT);
+
+	ILI9488_DrawString(hspi, 70, Y_TEMP_TEXT, "Temperature", COLOR_FONT,1);
+
+	ILI9488_DrawString(hspi, 70, Y_TEMP_VALUE, "Measuring", COLOR_FONT,1);
+
+	// -------------------------
+	// Humidity panel
+	// -------------------------
+
+	ILI9488_DrawRectangle(hspi, 20, Y_HUM_START, 299, Y_HUM_END, COLOR_FONT);
+
+	ILI9488_DrawString(hspi, 70, Y_HUM_TEXT, "Humidity", COLOR_FONT,1);
+
+	ILI9488_DrawString(hspi, 70, Y_HUM_VALUE, "Measuring", COLOR_FONT,1);
+}
+
+void ILI9488_DrawDashboardData(SPI_HandleTypeDef *hspi, SCD41_Data scd_data) {
+	char co2_str[32];
+	char temp_str[32];
+	char humidity_str[32];
+	// -------------------------
+	// CO2
+	// -------------------------
+	ILI9488_FillRectangle(hspi, 70, Y_CO2_VALUE, 70 + 10 * FONT_WIDTH,
+			Y_CO2_VALUE + FONT_HEIGHT, COLOR_BG);
+	sprintf(co2_str, "%d ppm", scd_data.co2);
+	ILI9488_DrawString(hspi, 70, Y_CO2_VALUE, co2_str, COLOR_FONT,1);
+
+	// -------------------------
+	// Temperature panel
+	// -------------------------
+	ILI9488_FillRectangle(hspi, 70, Y_TEMP_VALUE, 70 + 10 * FONT_WIDTH,
+			Y_TEMP_VALUE + FONT_HEIGHT, COLOR_BG);
+	sprintf(temp_str, "%.1f\x02 C", scd_data.temperature);
+	ILI9488_DrawString(hspi, 70, Y_TEMP_VALUE, temp_str, COLOR_FONT,1);
+
+	// -------------------------
+	// Humidity panel
+	// -------------------------
+	ILI9488_FillRectangle(hspi, 70, Y_HUM_VALUE, 70 + 10 * FONT_WIDTH,
+			Y_HUM_VALUE + FONT_HEIGHT, COLOR_BG);
+	sprintf(humidity_str, "%.1f %%", scd_data.humidity);
+	ILI9488_DrawString(hspi, 70, Y_HUM_VALUE, humidity_str, COLOR_FONT,1);
 }
